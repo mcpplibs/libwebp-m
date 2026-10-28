@@ -1,0 +1,4 @@
+[template]
+description  = "Animated WebP with mcpplibs.mwrap.libwebp's demux and mux features: frames encoded with WebPAnimEncoder, played back with WebPAnimDecoder"
+default      = false
+post_message = "Run `mcpp run`, or `mcpp run -- <file.webp>` to also write the animation."

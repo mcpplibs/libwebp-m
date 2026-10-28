@@ -1,0 +1,100 @@
+// {{project.name}} — WebP through import mcpplibs.mwrap.libwebp: a picture
+// with alpha (a gradient, a disc, a translucent band) encoded lossy at three
+// qualities and lossless, each decoded back to RGBA and compared with the
+// original. Give a directory to also write the files there.
+import std;
+import mcpplibs.mwrap.libwebp;
+
+using namespace mcpplibs::mwrap::libwebp;  // WebPConfigInit, WebPPictureInit … (header static inline functions)
+
+namespace {
+
+constexpr int W = 256, H = 160;
+
+std::vector<std::uint8_t> picture() {
+    std::vector<std::uint8_t> rgba(static_cast<std::size_t>(W) * H * 4);
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x) {
+            auto* p = &rgba[(static_cast<std::size_t>(y) * W + x) * 4];
+            const bool disc = (x - 170) * (x - 170) + (y - 80) * (y - 80) < 50 * 50;
+            p[0] = static_cast<std::uint8_t>(disc ? 240 : x);
+            p[1] = static_cast<std::uint8_t>(disc ? 180 : y * 255 / (H - 1));
+            p[2] = static_cast<std::uint8_t>(disc ? 40 : 255 - x);
+            p[3] = static_cast<std::uint8_t>(y >= H - 24 ? 96 : 255);  // a translucent band at the bottom
+        }
+    return rgba;
+}
+
+// WebPConfig + WebPPicture: every setting is reachable (quality, method,
+// lossless, exact, alpha quality …); the bytes go to a memory writer.
+std::vector<std::uint8_t> encode(std::span<const std::uint8_t> rgba, bool lossless, float quality) {
+    WebPConfig config;
+    WebPPicture pic;
+    if (!WebPConfigInit(&config) || !WebPPictureInit(&pic)) return {};
+    config.lossless = lossless;
+    config.quality = quality;  // lossy: visual quality; lossless: effort
+    config.method = 4;         // 0 fast … 6 smallest
+    pic.use_argb = 1;
+    pic.width = W;
+    pic.height = H;
+    WebPMemoryWriter writer;
+    WebPMemoryWriterInit(&writer);
+    pic.writer = WebPMemoryWrite;
+    pic.custom_ptr = &writer;
+    std::vector<std::uint8_t> out;
+    if (WebPPictureImportRGBA(&pic, rgba.data(), W * 4) && WebPEncode(&config, &pic))
+        out.assign(writer.mem, writer.mem + writer.size);
+    else
+        std::println(std::cerr, "encoding failed: error {}", static_cast<int>(pic.error_code));
+    WebPPictureFree(&pic);
+    WebPMemoryWriterClear(&writer);
+    return out;
+}
+
+// PSNR over the colour of the opaque pixels, and whether alpha came back exactly.
+std::pair<double, bool> compare(std::span<const std::uint8_t> a, const std::uint8_t* b) {
+    double error = 0;
+    std::size_t n = 0;
+    bool alpha = true;
+    for (std::size_t i = 0; i < a.size(); i += 4) {
+        alpha = alpha && a[i + 3] == b[i + 3];
+        if (a[i + 3] != 255) continue;
+        for (int c = 0; c < 3; ++c, ++n) error += (double(a[i + c]) - b[i + c]) * (double(a[i + c]) - b[i + c]);
+    }
+    return {error == 0 ? std::numeric_limits<double>::infinity() : 10 * std::log10(255.0 * 255.0 * n / error), alpha};
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    const auto rgba = picture();
+    std::println("libwebp {:x}.{:x}.{:x}: a {} x {} RGBA picture, {} bytes raw", WebPGetEncoderVersion() >> 16,
+                 (WebPGetEncoderVersion() >> 8) & 0xff, WebPGetEncoderVersion() & 0xff, W, H, rgba.size());
+    struct Setting {
+        const char* name;
+        bool lossless;
+        float quality;
+    };
+    for (const auto& s : {Setting{"lossy q30", false, 30}, Setting{"lossy q75", false, 75},
+                          Setting{"lossy q95", false, 95}, Setting{"lossless", true, 75}}) {
+        const auto file = encode(rgba, s.lossless, s.quality);
+        if (file.empty()) return 1;
+        // Decode: the simple API answers a buffer the library allocated.
+        int width = 0, height = 0;
+        std::uint8_t* pixels = WebPDecodeRGBA(file.data(), file.size(), &width, &height);
+        if (!pixels || width != W || height != H) {
+            std::println(std::cerr, "{}: decoding failed", s.name);
+            return 1;
+        }
+        const auto [psnr, alpha] = compare(rgba, pixels);
+        WebPFree(pixels);
+        std::println("{:<10} {:>6} bytes  PSNR {:>5.1f} dB  alpha {}", s.name, file.size(), psnr,
+                     alpha ? "exact" : "changed");
+        if (argc > 1) {
+            const auto path = std::filesystem::path(argv[1]) / std::format("{}.webp", s.name);
+            std::ofstream(path, std::ios::binary).write(reinterpret_cast<const char*>(file.data()),
+                                                        static_cast<std::streamsize>(file.size()));
+            std::println("           wrote {}", path.string());
+        }
+    }
+}
