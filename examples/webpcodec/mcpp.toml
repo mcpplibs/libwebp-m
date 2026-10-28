@@ -1,0 +1,13 @@
+# webpcodec: decode, encode and inspect WebP files, written against the module.
+# tools/run_conformance.py runs upstream's reference decode on it.
+[package]
+name        = "webpcodec"
+version     = "0.1.0"
+description = "Decode WebP to PPM/PAM, encode PPM/PAM to WebP (lossy or lossless), print a file's features: libwebp through import mcpplibs.mwrap.libwebp"
+
+[targets.webpcodec]
+kind = "bin"
+main = "src/main.cpp"
+
+[dependencies]
+"mcpplibs.mwrap.libwebp" = { path = "../.." }

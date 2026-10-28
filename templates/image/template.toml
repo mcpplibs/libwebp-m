@@ -1,0 +1,4 @@
+[template]
+description  = "WebP with import mcpplibs.mwrap.libwebp: a picture with alpha encoded lossy at three qualities and lossless, decoded back to RGBA and compared"
+default      = true
+post_message = "Run `mcpp run`, or `mcpp run -- <directory>` to also write the .webp files there."

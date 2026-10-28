@@ -1,0 +1,92 @@
+// {{project.name}} — animated WebP through mcpplibs.mwrap.libwebp's demux and
+// mux features: a ball bouncing across 12 frames, encoded with
+// WebPAnimEncoder (lossless, looping forever), then played back with
+// WebPAnimDecoder, every frame checked against the one drawn. Give a file
+// name to also write the animation.
+import std;
+import mcpplibs.mwrap.libwebp.demux;  // WebPAnimDecoder; re-exports mcpplibs.mwrap.libwebp
+import mcpplibs.mwrap.libwebp.mux;    // WebPAnimEncoder
+
+using namespace mcpplibs::mwrap::libwebp;  // the headers' static inline functions
+
+namespace {
+
+constexpr int W = 120, H = 90, Frames = 12, FrameMs = 80;
+
+std::vector<std::uint8_t> draw(int f) {
+    std::vector<std::uint8_t> rgba(static_cast<std::size_t>(W) * H * 4);
+    const int cx = 15 + f * 8, cy = 70 - static_cast<int>(50 * std::abs(std::sin(f * 3.14159265 / 6)));
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x) {
+            auto* p = &rgba[(static_cast<std::size_t>(y) * W + x) * 4];
+            const bool ball = (x - cx) * (x - cx) + (y - cy) * (y - cy) < 12 * 12;
+            p[0] = static_cast<std::uint8_t>(ball ? 250 : 20);
+            p[1] = static_cast<std::uint8_t>(ball ? 90 : 30 + y);
+            p[2] = static_cast<std::uint8_t>(ball ? 40 : 60 + y);
+            p[3] = 255;
+        }
+    return rgba;
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    // Encode: one WebPPicture per frame, at its timestamp; the encoder finds
+    // what changed between frames.
+    WebPAnimEncoderOptions options;
+    WebPConfig config;
+    WebPPicture pic;
+    if (!WebPAnimEncoderOptionsInit(&options) || !WebPConfigInit(&config) || !WebPPictureInit(&pic)) return 1;
+    options.anim_params.loop_count = 0;  // forever
+    config.lossless = 1;
+    WebPAnimEncoder* encoder = WebPAnimEncoderNew(W, H, &options);
+    if (!encoder) return 1;
+    pic.use_argb = 1;
+    pic.width = W;
+    pic.height = H;
+    for (int f = 0; f < Frames; ++f) {
+        const auto rgba = draw(f);
+        if (!WebPPictureImportRGBA(&pic, rgba.data(), W * 4) || !WebPAnimEncoderAdd(encoder, &pic, f * FrameMs, &config)) {
+            std::println(std::cerr, "frame {}: {}", f, WebPAnimEncoderGetError(encoder));
+            return 1;
+        }
+    }
+    WebPPictureFree(&pic);
+    WebPData webp;
+    WebPDataInit(&webp);
+    if (!WebPAnimEncoderAdd(encoder, nullptr, Frames * FrameMs, nullptr) || !WebPAnimEncoderAssemble(encoder, &webp)) {
+        std::println(std::cerr, "assembly: {}", WebPAnimEncoderGetError(encoder));
+        return 1;
+    }
+    WebPAnimEncoderDelete(encoder);
+    std::println("encoded {} frames of {} x {} into {} bytes ({} raw)", Frames, W, H, webp.size,
+                 Frames * W * H * 4);
+
+    // Decode: every call gives the whole canvas at the frame's end time.
+    WebPAnimDecoderOptions decoding;
+    if (!WebPAnimDecoderOptionsInit(&decoding)) return 1;
+    decoding.color_mode = MODE_RGBA;
+    WebPAnimDecoder* decoder = WebPAnimDecoderNew(&webp, &decoding);
+    WebPAnimInfo info;
+    if (!decoder || !WebPAnimDecoderGetInfo(decoder, &info)) return 1;
+    std::println("{} x {}, {} frames, loop count {}", info.canvas_width, info.canvas_height, info.frame_count,
+                 info.loop_count);
+    int f = 0, failures = 0;
+    while (WebPAnimDecoderHasMoreFrames(decoder)) {
+        std::uint8_t* canvas = nullptr;
+        int timestamp = 0;
+        if (!WebPAnimDecoderGetNext(decoder, &canvas, &timestamp)) return 1;
+        const auto expected = draw(f);
+        const bool same = std::equal(expected.begin(), expected.end(), canvas);
+        failures += !same;
+        std::println("frame {:>2} until {:>4} ms  {}", f++, timestamp, same ? "exact" : "DIFFERENT");
+    }
+    WebPAnimDecoderDelete(decoder);
+    if (argc > 1) {
+        std::ofstream(argv[1], std::ios::binary).write(reinterpret_cast<const char*>(webp.bytes),
+                                                       static_cast<std::streamsize>(webp.size));
+        std::println("wrote {}", argv[1]);
+    }
+    WebPDataClear(&webp);
+    return failures;
+}

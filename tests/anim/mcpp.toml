@@ -1,0 +1,12 @@
+# Animated WebP and the container through the modules: its own project, for
+# the demux and mux features.
+[package]
+name        = "libwebp-anim-tests"
+version     = "0.1.0"
+description = "mcpplibs.mwrap.libwebp with the demux and mux features: WebPAnimEncoder, WebPAnimDecoder, WebPDemux and WebPMux"
+
+[dependencies]
+"mcpplibs.mwrap.libwebp" = { path = "../..", features = ["demux", "mux"] }
+
+[dev-dependencies]
+compat.gtest = "1.15.2"

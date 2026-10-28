@@ -1,0 +1,27 @@
+{
+  "upstream": "https://github.com/webmproject/libwebp/archive/refs/tags/v1.5.0.tar.gz",
+  "upstream_sha256": "668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37",
+  "pruning": "Nothing of libwebp is vendored: the codec is compat.libwebp 1.5.0, built from the same tarball (dec, enc, dsp, utils and sharpyuv; demux and mux with the features of the same names). Its README, license, patent grant and authors are retained here.",
+  "documents": [
+    {
+      "path": "upstream/libwebp/README.md",
+      "source": "https://github.com/webmproject/libwebp/blob/v1.5.0/README.md",
+      "sha256": "0e80b310df17ed453fdd843b853f4d0a713320f2156fb1763da6648d1ef017f5"
+    },
+    {
+      "path": "upstream/libwebp/COPYING",
+      "source": "https://github.com/webmproject/libwebp/blob/v1.5.0/COPYING",
+      "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+    },
+    {
+      "path": "upstream/libwebp/PATENTS",
+      "source": "https://github.com/webmproject/libwebp/blob/v1.5.0/PATENTS",
+      "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+    },
+    {
+      "path": "upstream/libwebp/AUTHORS",
+      "source": "https://github.com/webmproject/libwebp/blob/v1.5.0/AUTHORS",
+      "sha256": "b97b44ab6fc6f4b2e9c5b5ad84fe4f7bd198696fc6b43830598c3e1364b84df4"
+    }
+  ]
+}
