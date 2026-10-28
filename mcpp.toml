@@ -1,0 +1,62 @@
+# Module wrapper; upstream API preserved. Policy: mcpp-index/docs/mwrap.md.
+[package]
+namespace   = "mcpplibs.mwrap"
+name        = "libwebp"
+version     = "1.5.0"
+description = "libwebp 1.5.0 C++ modules for mcpp (import mcpplibs.mwrap.libwebp;): the WebP codec's decode, encode and sharpyuv API over compat.libwebp, its static inline API adapted, its macros as constants and constexpr functions; demux (WebPAnimDecoder) and mux (WebPAnimEncoder) as features"
+license     = "Apache-2.0"
+authors     = ["mcpp-community"]
+repo        = "https://github.com/mcpplibs/libwebp-m"
+platforms   = ["linux", "macos", "windows"]
+
+[targets.libwebp]
+kind = "lib"
+
+[build]
+sources = ["src/*.cppm", "src/*.cpp"]
+
+[features]
+default = []
+# libwebpdemux: the container parser and WebPAnimDecoder (compat.libwebp's
+# src/demux), and the module that exports them.
+demux = { sources = ["src/demux/*.cppm", "src/demux/*.cpp"], forward = ["compat.libwebp/demux"] }
+# libwebpmux: the container editor and WebPAnimEncoder (compat.libwebp's
+# src/mux), and the module that exports them.
+mux = { sources = ["src/mux/*.cppm", "src/mux/*.cpp"], forward = ["compat.libwebp/mux"] }
+
+[dependencies]
+compat.libwebp = "1.5.0"
+
+[dev-dependencies]
+compat.gtest = "1.15.2"
+
+[test]
+# tests/anim is its own project (it needs the demux and mux features).
+discover = ["tests/*.cpp"]
+
+[package.metadata.mwrap]
+upstream-version = "1.5.0"
+
+[[runtime.deploy]]
+from = "LICENSE"
+to   = "licenses/libwebp"
+
+[[runtime.deploy]]
+from = "NOTICE"
+to   = "licenses/libwebp"
+
+[[runtime.deploy]]
+from = "upstream/libwebp/README.md"
+to   = "licenses/libwebp/upstream/libwebp"
+
+[[runtime.deploy]]
+from = "upstream/libwebp/COPYING"
+to   = "licenses/libwebp/upstream/libwebp"
+
+[[runtime.deploy]]
+from = "upstream/libwebp/PATENTS"
+to   = "licenses/libwebp/upstream/libwebp"
+
+[[runtime.deploy]]
+from = "upstream/libwebp/AUTHORS"
+to   = "licenses/libwebp/upstream/libwebp"
