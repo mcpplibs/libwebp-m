@@ -10,4 +10,4 @@ kind = "bin"
 main = "src/main.cpp"
 
 [dependencies]
-"mcpplibs.mwrap.libwebp" = { path = "../.." }
+mcpplibs.mwrap.libwebp = { path = "../.." }

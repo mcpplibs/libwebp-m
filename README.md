@@ -34,20 +34,20 @@ and pinned hashes hold on every target, the Web included.
 ## Getting started
 
 ```sh
-mcpp new pictures --template mcpplibs.mwrap.libwebp@1.5.0
+mcpp new pictures --template mcpplibs.mwrap.libwebp@1.5.0.1
 cd pictures
 mcpp run
 ```
 
 The default template encodes a picture with alpha lossy at three qualities
 and lossless, decodes each back to RGBA and prints its size and PSNR. The
-`animation` template (`--template mcpplibs.mwrap.libwebp@1.5.0:animation`)
+`animation` template (`--template mcpplibs.mwrap.libwebp@1.5.0.1:animation`)
 encodes frames with `WebPAnimEncoder` and plays them back with
 `WebPAnimDecoder`.
 
 ```toml
 [dependencies]
-"mcpplibs.mwrap.libwebp" = "1.5.0"
+mcpplibs.mwrap.libwebp = "1.5.0.1"
 ```
 
 ```cpp

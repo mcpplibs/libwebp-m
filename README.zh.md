@@ -32,18 +32,18 @@ libwebp 1.5.0 解码和编码 WebP：有损（VP8）与无损（VP8L），支持
 ## 快速开始
 
 ```sh
-mcpp new pictures --template mcpplibs.mwrap.libwebp@1.5.0
+mcpp new pictures --template mcpplibs.mwrap.libwebp@1.5.0.1
 cd pictures
 mcpp run
 ```
 
 默认模板把一张带 alpha 的图片以三种质量有损编码、再无损编码，逐一解码回 RGBA，
-打印大小与 PSNR。`animation` 模板（`--template mcpplibs.mwrap.libwebp@1.5.0:animation`）
+打印大小与 PSNR。`animation` 模板（`--template mcpplibs.mwrap.libwebp@1.5.0.1:animation`）
 用 `WebPAnimEncoder` 编码多帧，再用 `WebPAnimDecoder` 回放。
 
 ```toml
 [dependencies]
-"mcpplibs.mwrap.libwebp" = "1.5.0"
+mcpplibs.mwrap.libwebp = "1.5.0.1"
 ```
 
 ```cpp
