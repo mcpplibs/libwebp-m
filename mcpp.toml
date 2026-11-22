@@ -2,7 +2,7 @@
 [package]
 namespace   = "mcpplibs.mwrap"
 name        = "libwebp"
-version     = "1.5.0"
+version     = "1.5.0.1"
 description = "libwebp 1.5.0 C++ modules for mcpp (import mcpplibs.mwrap.libwebp;): the WebP codec's decode, encode and sharpyuv API over compat.libwebp, its static inline API adapted, its macros as constants and constexpr functions; demux (WebPAnimDecoder) and mux (WebPAnimEncoder) as features"
 license     = "Apache-2.0"
 authors     = ["mcpp-community"]
